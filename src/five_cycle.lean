@@ -1,4 +1,5 @@
 import analysis.special_functions.trigonometric.basic
+import analysis.normed_space.lp_space
 import to_mathlib.combinatorics.simple_graph.cyclic
 import to_mathlib.combinatorics.simple_graph.shannon_capacity
 
@@ -19,7 +20,34 @@ def e₂ : 𝔼³ := euclidean_space.single 1 1
 /-- Standard basis element. -/
 def e₃ : 𝔼³ := euclidean_space.single 2 1
 
-@[simp] lemma norm_e₁ : ∥e₁∥ = 1 := sorry
+@[simp] lemma euclidean_space.norm_single
+  (𝕜 : Type _) (ι : Type _) [fintype ι] [decidable_eq ι] (i : ι) (k : 𝕜) [is_R_or_C 𝕜] :
+  ∥euclidean_space.single i k∥ = k^2 :=
+begin
+  rw euclidean_space.norm_eq,
+  rw ←finset.filter_union_filter_neg_eq (λ j, j = i) finset.univ,
+  rw finset.sum_union,
+  { simp,
+    rw finset.filter_eq',
+    simp,
+    rw finset.sum_eq_zero,
+    swap,
+    { intros,
+      simp at H,
+      rw if_neg H,
+      norm_num, },
+    { norm_num, } },
+  { sorry, }
+end
+
+@[simp] lemma norm_e₁ : ∥e₁∥ = 1 :=
+begin
+  simp only [euclidean_space.norm_eq, fin.univ_def, list.fin_range_succ_eq_map, list.map, list.fin_range_zero,
+  fin.succ_zero_eq_one, fin.succ_one_eq_two, norm_eq_abs, pow_bit0_abs, finset.sum_mk, multiset.coe_map,
+  multiset.coe_sum, list.sum_cons, list.sum_nil, add_zero, sqrt_eq_one],
+  rw e₁,
+  norm_num,
+end
 
 /-- The Lovász umbrella. -/
 def lovasz_umbrella : orthogonal_representation 𝔾₅ 𝔼³ :=
