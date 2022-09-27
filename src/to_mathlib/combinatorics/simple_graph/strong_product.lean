@@ -13,7 +13,11 @@ good practice for `strong_pi` below, which we do need. -/
 def strong_prod {V₁ V₂ : Type*} (G₁ : simple_graph V₁) (G₂ : simple_graph V₂) :
   simple_graph (V₁ × V₂) :=
 { adj := λ x y, x ≠ y ∧ (x.1 = y.1 ∨ G₁.adj x.1 y.1) ∧ (x.2 = y.2 ∨ G₂.adj x.2 y.2),
-  symm := sorry,
+  symm :=
+  begin
+    sorry,
+  end,
+
   loopless :=
   begin
     unfold irreflexive,
