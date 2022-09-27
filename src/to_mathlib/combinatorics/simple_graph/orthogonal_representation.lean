@@ -51,7 +51,17 @@ def lovasz_number_at (e : E) : ℝ :=
 
 @[simp] lemma lovasz_number_at_nneg (e : E) :
   0 ≤ ρ.lovasz_number_at e :=
-sorry
+  begin
+    unfold lovasz_number_at,
+    apply real.Sup_nonneg,
+    intro,
+    unfold range,
+    intro h₀,
+    cases h₀ with v h,
+    rw ← div_pow at h,
+    rw ← h,
+    apply sq_nonneg,
+  end
 
 lemma lovasz_number_at_eq_csupr (e : E) :
   ρ.lovasz_number_at e = ⨆ v, ∥e∥^2 / ⟪ρ v, e⟫^2 :=
