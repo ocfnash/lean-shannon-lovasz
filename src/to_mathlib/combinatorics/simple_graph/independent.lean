@@ -20,7 +20,31 @@ G.independent (coe : s → V)
 
 lemma independent_set_iff_is_antichain (s : set V) :
   G.independent_set s ↔ is_antichain G.adj s :=
-sorry
+  begin
+    unfold independent_set,
+    unfold independent,
+    unfold is_antichain,
+    unfold compl,
+    split,
+    {
+    intro h,
+    intros v hvs w hws hvw,
+    lift v to s using hvs,
+    lift w to s using hws,
+    apply h v w
+    },
+    {
+    intro h,
+    intros i j,
+    cases i with i hi,
+    cases j with j hj,
+    specialize h hi hj,
+    by_cases hij : i = j,
+    {subst hij,
+    apply G.loopless i},
+    {exact h hij},
+    }
+  end
 
 /-- The _independence number_ of a graph is the cardinality of an independent set containing as many
 vertices as possible.
