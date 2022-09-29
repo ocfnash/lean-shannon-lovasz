@@ -1,6 +1,7 @@
 import analysis.inner_product_space.basic
 import algebra.algebra.bilinear
 import to_mathlib.linear_algebra.tensor_power
+import linear_algebra.finite_dimensional
 
 noncomputable theory
 
@@ -57,6 +58,8 @@ end some_linear_algebra_from_kevin
 lower down for the _tensor power_.
 
 This is still a gap in Mathlib that is worth filling. -/
+variables (hE : finite_dimensional ℝ E) (hF : finite_dimensional ℝ F)
+include hE hF
 instance : inner_product_space ℝ (E ⊗[ℝ] F) := of_core
 { inner := λ x y, tensor_product_aux E F (x ⊗ₜ y),
   conj_sym :=
@@ -74,27 +77,18 @@ instance : inner_product_space ℝ (E ⊗[ℝ] F) := of_core
     { simpa },
     rw [← inner_conj_sym e₁, is_R_or_C.conj_to_real, ← inner_conj_sym f₁, is_R_or_C.conj_to_real],}
   end,
-  nonneg_re := begin
-    intro x,
+  nonneg_re := λ z, begin
     rw [is_R_or_C.re_to_real],
-    -- have H1 := (tensor_product_aux E F).comp (tensor_product.mk ℝ (E ⊗ F) (E ⊗ F) x),
-    induction x using tensor_product.induction_on with e f x₁ x₂ hx₁ hx₂,
-    { rw [tensor_product.tmul_zero, map_zero]},
-    { rw tensor_product_aux_apply,
-      exact mul_nonneg real_inner_self_nonneg real_inner_self_nonneg,},
-    { simp only [tensor_product.add_tmul, tensor_product.tmul_add, map_add],
-      apply add_nonneg,
-      { apply add_nonneg hx₁,
-
-        sorry,
-      },
-      { apply add_nonneg _ hx₂,
-        sorry,}
-    },
+    rw ← (basis.of_vector_space ℝ (E ⊗ F)).total_repr z,
+    -- rw ← (basis.of_vector_space ℝ E).total_repr z,
+    sorry
   end,
   definite := sorry,
-  add_left := sorry,
-  smul_left := sorry, }
+  add_left := λ x y z, by rw [tensor_product.add_tmul, map_add],
+  smul_left := λ x y r, by rw [is_R_or_C.conj_to_real,
+    ← tensor_product.smul_tmul', map_smul, smul_eq_mul],}
+omit hE hF
+
 
 
 -- #check (tensor_product_aux E F).comp (tensor_product.mk ℝ (E ⊗ F) (E ⊗ F))
