@@ -21,7 +21,7 @@ def e₂ : 𝔼³ := euclidean_space.single 1 1
 def e₃ : 𝔼³ := euclidean_space.single 2 1
 
 @[simp] lemma norm_e₁ : ∥e₁∥ = 1 :=
-  by simp [e₁, euclidean_space.norm_eq, finset.filter_eq'] ,
+  by simp [e₁, euclidean_space.norm_eq, finset.filter_eq']
 
 /-- The Lovász umbrella. -/
 def lovasz_umbrella : orthogonal_representation 𝔾₅ 𝔼³ :=
