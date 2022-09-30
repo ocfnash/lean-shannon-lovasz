@@ -20,26 +20,6 @@ def e₂ : 𝔼³ := euclidean_space.single 1 1
 /-- Standard basis element. -/
 def e₃ : 𝔼³ := euclidean_space.single 2 1
 
-@[simp] lemma euclidean_space.norm_single
-  (𝕜 : Type _) (ι : Type _) [fintype ι] [decidable_eq ι] (i : ι) (k : 𝕜) [is_R_or_C 𝕜] :
-  ∥euclidean_space.single i k∥ = k^2 :=
-begin
-  rw euclidean_space.norm_eq,
-  rw ←finset.filter_union_filter_neg_eq (λ j, j = i) finset.univ,
-  rw finset.sum_union,
-  { simp,
-    rw finset.filter_eq',
-    simp,
-    rw finset.sum_eq_zero,
-    swap,
-    { intros,
-      simp at H,
-      rw if_neg H,
-      norm_num, },
-    { norm_num, } },
-  { sorry, }
-end
-
 @[simp] lemma norm_e₁ : ∥e₁∥ = 1 :=
 begin
   simp only [euclidean_space.norm_eq, fin.univ_def, list.fin_range_succ_eq_map, list.map, list.fin_range_zero,

@@ -52,7 +52,6 @@ def lovasz_number_at (e : E) : ℝ :=
 @[simp] lemma lovasz_number_at_nneg (e : E) :
   0 ≤ ρ.lovasz_number_at e :=
   begin
-    unfold lovasz_number_at,
     apply real.Sup_nonneg,
     intro,
     unfold range,

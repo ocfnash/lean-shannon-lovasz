@@ -18,15 +18,8 @@ def strong_prod {V₁ V₂ : Type*} (G₁ : simple_graph V₁) (G₂ : simple_gr
     sorry,
   end,
 
-  loopless :=
+  loopless := λ x ⟨contra1, contra2⟩, contra1
   begin
-    unfold irreflexive,
-    intros x,
-    dunfold not,
-    rintros ⟨contra1, contra2⟩,
-    dunfold ne at contra1,
-    dunfold not at contra1,
-    apply contra1,
     refl,
   end, }
 

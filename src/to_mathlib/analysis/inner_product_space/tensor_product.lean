@@ -77,7 +77,8 @@ instance : inner_product_space ℝ (E ⊗[ℝ] F) := of_core
     { simpa },
     rw [← inner_conj_sym e₁, is_R_or_C.conj_to_real, ← inner_conj_sym f₁, is_R_or_C.conj_to_real],}
   end,
-  nonneg_re := λ z, begin
+  nonneg_re := begin
+    intros z,
     rw [is_R_or_C.re_to_real],
     rw [← (basis.of_vector_space ℝ (E ⊗ F)).total_repr z, basis.coe_of_vector_space],
     rw finsupp.total_apply,
@@ -107,6 +108,16 @@ instance (k : ℕ) : inner_product_space ℝ (⨂[ℝ]^k E) := sorry
   ⟪tensor_power.tpow ℝ e₁, tensor_power.tpow ℝ e₂⟫ = ∏ i, ⟪e₁ i, e₂ i⟫ :=
 sorry
 
+example (E : Type*) (F : Type*)
+  [inner_product_space ℝ E] [finite_dimensional ℝ E]
+  [inner_product_space ℝ F] [finite_dimensional ℝ F] :
+  ∀ (x : E ⊗[ℝ] F),
+    0 ≤ is_R_or_C.re ((tensor_product_aux E F) (x ⊗ₜ[ℝ] x)) :=
+begin
+  intros x,
+  admit,
+end
+
 end inner_product_space
 
 
@@ -115,7 +126,7 @@ section more_stuff
 open_locale classical
 
 variables {k E : Type*} [field k] [add_comm_group E] [module k E]
-lemma to_fd (e : E) : ∃ (E' : subspace k E) [finite_dimensional k E'], e ∈ E' :=
+lemma to_fd (e : E) : ∃ (E' : subspace k E) [finite_dimensional k E'], e ∈ E' := -- this is the μ or η in the paper proof
 begin
   refine ⟨submodule.span k ( finset.image (basis.of_vector_space k E) ((basis.of_vector_space k E).repr e).support), _, _⟩,
   { apply finite_dimensional.span_finset,},
@@ -129,5 +140,6 @@ begin
     rw [finset.coe_image, set.mem_image],
     exact ⟨_, hc, rfl⟩},
 end
+
 
 end more_stuff
