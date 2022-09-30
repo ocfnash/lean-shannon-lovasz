@@ -58,8 +58,8 @@ end some_linear_algebra_from_kevin
 lower down for the _tensor power_.
 
 This is still a gap in Mathlib that is worth filling. -/
-variables (hE : finite_dimensional ℝ E) (hF : finite_dimensional ℝ F)
-include hE hF
+--variables (hE : finite_dimensional ℝ E) (hF : finite_dimensional ℝ F)
+--include hE hF
 instance : inner_product_space ℝ (E ⊗[ℝ] F) := of_core
 { inner := λ x y, tensor_product_aux E F (x ⊗ₜ y),
   conj_sym :=
@@ -79,23 +79,23 @@ instance : inner_product_space ℝ (E ⊗[ℝ] F) := of_core
   end,
   nonneg_re := λ z, begin
     rw [is_R_or_C.re_to_real],
-    rw ← (basis.of_vector_space ℝ (E ⊗ F)).total_repr z,
-    -- rw ← (basis.of_vector_space ℝ E).total_repr z,
+    rw [← (basis.of_vector_space ℝ (E ⊗ F)).total_repr z, basis.coe_of_vector_space],
+    rw finsupp.total_apply,
     sorry
   end,
-  definite := sorry,
+  definite := λ x, begin
+    sorry
+  end,
   add_left := λ x y z, by rw [tensor_product.add_tmul, map_add],
   smul_left := λ x y r, by rw [is_R_or_C.conj_to_real,
     ← tensor_product.smul_tmul', map_smul, smul_eq_mul],}
-omit hE hF
-
+-- omit hE hF
 
 
 -- #check (tensor_product_aux E F).comp (tensor_product.mk ℝ (E ⊗ F) (E ⊗ F))
 -- #check (tensor_product_aux E F)
 -- .comp (tensor_product.mk ℝ (E ⊗ F) (E ⊗ F))
 
-#exit
 
 @[simp] lemma inner_tprod (e₁ e₂ : E) (f₁ f₂ : F) :
   ⟪e₁ ⊗ₜ[ℝ] f₁, e₂ ⊗ₜ[ℝ] f₂⟫ = ⟪e₁, e₂⟫ * ⟪f₁, f₂⟫ :=
@@ -108,3 +108,26 @@ instance (k : ℕ) : inner_product_space ℝ (⨂[ℝ]^k E) := sorry
 sorry
 
 end inner_product_space
+
+
+section more_stuff
+
+open_locale classical
+
+variables {k E : Type*} [field k] [add_comm_group E] [module k E]
+lemma to_fd (e : E) : ∃ (E' : subspace k E) [finite_dimensional k E'], e ∈ E' :=
+begin
+  refine ⟨submodule.span k ( finset.image (basis.of_vector_space k E) ((basis.of_vector_space k E).repr e).support), _, _⟩,
+  { apply finite_dimensional.span_finset,},
+  { have H := (basis.of_vector_space k E).total_repr e,
+    conv_lhs { rw ← H},
+    rw finsupp.total_apply,
+    convert submodule.sum_mem _ _,
+    intros c hc,
+    convert submodule.smul_mem _ _ _,
+    apply submodule.subset_span,
+    rw [finset.coe_image, set.mem_image],
+    exact ⟨_, hc, rfl⟩},
+end
+
+end more_stuff
