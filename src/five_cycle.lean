@@ -53,7 +53,7 @@ lemma shannon_capacity_cyclic_graph_five_le :
   shannon_capacity 𝔾₅ ≤ sqrt 5 :=
 begin
   apply (shannon_capacity_le_lovasz_number_at 𝔾₅ lovasz_umbrella e₁).trans,
-  sorry,
+  apply lovasz_number_at_lovasz_umbrella_eq.le,
 end
 
 /-- *Main project goal* -/
