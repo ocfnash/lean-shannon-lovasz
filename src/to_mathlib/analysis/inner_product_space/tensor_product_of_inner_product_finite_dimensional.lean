@@ -127,6 +127,33 @@ tensor_product.lift
     linear_map.coe_mk, linear_map.coe_mk, submodule.coe_smul, tensor_product.smul_tmul,
     tensor_product.tmul_smul] }
 
+lemma tensor_submodule_mk {E' : subspace ℝ E} {F' : subspace ℝ F} (e : E') (f : F') :
+  tensor_submodule E F E' F' (e ⊗ₜ f) = (e : E) ⊗ₜ (f : F) := rfl
+
+lemma tensor_submodule_range_mono1 {E' E'' : subspace ℝ E} (F' : subspace ℝ F)
+  (le1 : E' ≤ E'') :
+  linear_map.range (tensor_submodule E F E' F') ≤
+  linear_map.range (tensor_submodule E F E'' F') := λ x hx,
+begin
+  obtain ⟨x, rfl⟩ := hx,
+  induction x using tensor_product.induction_on with e f x₁ x₂ ih₁ ih₂,
+  { rw [map_zero], exact submodule.zero_mem _ },
+  { rw [tensor_submodule_mk], exact ⟨⟨e, le1 e.2⟩ ⊗ₜ f, rfl⟩, },
+  { rw [map_add], exact submodule.add_mem _ ih₁ ih₂, },
+end
+
+lemma tensor_submodule_range_mono2 (E' : subspace ℝ E) {F' F'' : subspace ℝ F}
+  (le2 : F' ≤ F'') :
+  linear_map.range (tensor_submodule E F E' F') ≤
+  linear_map.range (tensor_submodule E F E' F'') := λ x hx,
+begin
+  obtain ⟨x, rfl⟩ := hx,
+  induction x using tensor_product.induction_on with e f x₁ x₂ ih₁ ih₂,
+  { rw [map_zero], exact submodule.zero_mem _ },
+  { rw [tensor_submodule_mk], exact ⟨e ⊗ₜ ⟨f, le2 f.2⟩, rfl⟩, },
+  { rw [map_add], exact submodule.add_mem _ ih₁ ih₂, },
+end
+
 lemma tensor_submodule_apply_tmul (E' : subspace ℝ E) (F' : subspace ℝ F) (e : E') (f : F') :
   tensor_submodule E F E' F' (e ⊗ₜ f) = (e : E) ⊗ₜ (f : F) := rfl
 
@@ -143,9 +170,16 @@ begin
   { rcases ih₁ with ⟨E1, F1, iE1, iF1, ⟨z1, rfl⟩⟩,
     rcases ih₂ with ⟨E2, F2, iE2, iF2, ⟨z2, rfl⟩⟩,
     resetI,
-    refine ⟨E1 ⊔ E2, F1 ⊔ F2, submodule.finite_dimensional_sup E1 E2,
-      submodule.finite_dimensional_sup F1 F2, _⟩,
-    sorry },
+    have le1 : linear_map.range (tensor_submodule E F E1 F1) ≤
+      linear_map.range (tensor_submodule E F (E1 ⊔ E2) (F1 ⊔ F2)),
+    { exact (tensor_submodule_range_mono1 E F F1 (le_sup_left : E1 ≤ E1 ⊔ E2)).trans
+        (tensor_submodule_range_mono2 E F _ _), },
+    have le2 : linear_map.range (tensor_submodule E F E2 F2) ≤
+      linear_map.range (tensor_submodule E F (E1 ⊔ E2) (F1 ⊔ F2)),
+    { exact (tensor_submodule_range_mono1 _ _ _ (le_sup_right : E2 ≤ E1 ⊔ E2)).trans
+        (tensor_submodule_range_mono2 _ _ _ _), },
+    exact ⟨E1 ⊔ E2, F1 ⊔ F2, submodule.finite_dimensional_sup E1 E2,
+      submodule.finite_dimensional_sup F1 F2, submodule.add_mem _ (le1 ⟨z1, rfl⟩) (le2 ⟨z2, rfl⟩)⟩ },
 end
 
 lemma tensor_product_aux_restrict_apply' (x y : E ⊗[ℝ] F)
