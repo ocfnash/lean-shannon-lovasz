@@ -9,6 +9,9 @@ namespace inner_product_space
 
 variables (E F : Type*) [linear_order E] [linear_order F]
 variables [inner_product_space ℝ E] [inner_product_space ℝ F]
+
+section finite
+
 variables [finite_dimensional ℝ E] [finite_dimensional ℝ F]
 
 lemma reduce_E_tensor_F (z : E ⊗[ℝ] F) :
@@ -40,7 +43,9 @@ begin
     refine finset.sum_congr rfl _,
     rintros ⟨i, j⟩ h, dsimp only, congr' 2; simp only [orthonormal_basis.coe_to_basis] },
   { rcases ih₁ with ⟨s₁, t₁, cE₁, cF₁, ih₁⟩, rcases ih₂ with ⟨s₂, t₂, cE₂, cF₂, ih₂⟩,
-    refine ⟨s₁ ∪ s₂, t₁ ∪ t₂, _, _, _⟩, sorry, sorry, sorry }
+    refine ⟨s₁ ∪ s₂, t₁ ∪ t₂, _, _, _⟩,
+    -- glueing together but minus overlap
+    sorry, sorry, sorry }
 end
 
 instance tensor_product_of_finite : inner_product_space ℝ (E ⊗[ℝ] F) :=
@@ -88,5 +93,83 @@ of_core
   add_left := λ x y z, by rw [tensor_product.add_tmul, map_add],
   smul_left := λ x y r, by rw [is_R_or_C.conj_to_real,
     ← tensor_product.smul_tmul', map_smul, smul_eq_mul],}
+
+end finite
+
+section possibly_infinite
+
+lemma to_fd (e : E) : ∃ (E' : subspace ℝ E) [finite_dimensional ℝ E'], e ∈ E' :=
+begin
+  classical,
+  refine ⟨submodule.span ℝ (finset.image (basis.of_vector_space ℝ E)
+    ((basis.of_vector_space ℝ E).repr e).support), _, _⟩,
+  { apply finite_dimensional.span_finset,},
+  { conv_lhs { rw ←(basis.of_vector_space ℝ E).total_repr e },
+    rw finsupp.total_apply,
+    convert submodule.sum_mem _ _,
+    intros c hc,
+    convert submodule.smul_mem _ _ _,
+    apply submodule.subset_span,
+    rw [finset.coe_image, set.mem_image],
+    exact ⟨_, hc, rfl⟩},
+end
+
+def tensor_submodule (E' : subspace ℝ E) (F' : subspace ℝ F) :
+  (E' ⊗[ℝ] F') →ₗ[ℝ] (E ⊗[ℝ] F) :=
+tensor_product.lift
+{ to_fun := λ e',
+  { to_fun := λ f', (e' : E) ⊗ₜ (f' : F),
+    map_add' := λ f f', by rw [submodule.coe_add, tensor_product.tmul_add],
+    map_smul' := λ r f, by rw [ring_hom.id_apply, submodule.coe_smul, tensor_product.tmul_smul], },
+  map_add' := λ e e', linear_map.ext $ λ f, by rw [linear_map.coe_mk, submodule.coe_add,
+    tensor_product.add_tmul, linear_map.add_apply, linear_map.coe_mk, linear_map.coe_mk],
+  map_smul' := λ r e, linear_map.ext $ λ f, by rw [ring_hom.id_apply, linear_map.smul_apply,
+    linear_map.coe_mk, linear_map.coe_mk, submodule.coe_smul, tensor_product.smul_tmul,
+    tensor_product.tmul_smul] }
+
+
+lemma to_tensor_fd (z : E ⊗[ℝ] F) : ∃ (E' : subspace ℝ E) (F' : subspace ℝ F)
+  [finite_dimensional ℝ E'] [finite_dimensional ℝ F'],
+  z ∈ (tensor_submodule E F E' F').range :=
+begin
+  induction z using tensor_product.induction_on with e f z₁ z₂ ih₁ ih₂,
+  { refine ⟨⊥, ⊥, _, _, submodule.zero_mem _⟩,
+    exacts [finite_dimensional_bot ℝ E, finite_dimensional_bot ℝ F] },
+  { rcases to_fd E e with ⟨E', iE', he⟩,
+    rcases to_fd F f with ⟨F', iF', hf⟩,
+    exact ⟨E', F', iE', iF', ⟨⟨e, he⟩ ⊗ₜ ⟨f, hf⟩, rfl⟩⟩, },
+  { rcases ih₁ with ⟨E1, F1, iE1, iF1, ⟨z1, rfl⟩⟩,
+    rcases ih₂ with ⟨E2, F2, iE2, iF2, ⟨z2, rfl⟩⟩,
+    resetI,
+    refine ⟨E1 ⊔ E2, F1 ⊔ F2, submodule.finite_dimensional_sup E1 E2,
+      submodule.finite_dimensional_sup F1 F2, _⟩,
+    sorry },
+end
+
+lemma tensor_product_aux_restrict_apply (x y : E ⊗[ℝ] F)
+  (E' : subspace ℝ E) (F' : subspace ℝ F)
+  (hx : x ∈ (tensor_submodule E F E' F').range)
+  (hy : y ∈ (tensor_submodule E F E' F').range) :
+  (tensor_product_aux E F (x ⊗ₜ y)) =
+  (tensor_product_aux E' F' (hx.some ⊗ₜ hy.some)) :=  sorry
+
+instance tensor_product' : inner_product_space ℝ (E ⊗[ℝ] F) :=
+of_core
+{ inner := λ x y, tensor_product_aux E F (x ⊗ₜ y),
+  conj_sym := sorry,
+  nonneg_re := begin
+    intros z, rw is_R_or_C.re_to_real,
+    obtain ⟨E', F', iE', iF', hz⟩ := to_tensor_fd E F z,
+    rw tensor_product_aux_restrict_apply E F z z E' F'
+      hz hz,
+    resetI,
+    convert_to 0 ≤ (inner_product_space.tensor_product_of_finite E' F').inner _ _,
+    exact real_inner_self_nonneg,
+  end,
+  definite := sorry,
+  add_left := sorry,
+  smul_left := sorry }
+
+end possibly_infinite
 
 end inner_product_space
