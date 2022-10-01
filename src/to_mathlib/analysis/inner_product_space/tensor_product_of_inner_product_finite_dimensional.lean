@@ -114,7 +114,7 @@ begin
     exact ⟨_, hc, rfl⟩},
 end
 
-def tensor_submodule (E' : subspace ℝ E) (F' : subspace ℝ F) :
+@[simps] def tensor_submodule (E' : subspace ℝ E) (F' : subspace ℝ F) :
   (E' ⊗[ℝ] F') →ₗ[ℝ] (E ⊗[ℝ] F) :=
 tensor_product.lift
 { to_fun := λ e',
@@ -127,6 +127,8 @@ tensor_product.lift
     linear_map.coe_mk, linear_map.coe_mk, submodule.coe_smul, tensor_product.smul_tmul,
     tensor_product.tmul_smul] }
 
+lemma tensor_submodule_apply_tmul (E' : subspace ℝ E) (F' : subspace ℝ F) (e : E') (f : F') :
+  tensor_submodule E F E' F' (e ⊗ₜ f) = (e : E) ⊗ₜ (f : F) := rfl
 
 lemma to_tensor_fd (z : E ⊗[ℝ] F) : ∃ (E' : subspace ℝ E) (F' : subspace ℝ F)
   [finite_dimensional ℝ E'] [finite_dimensional ℝ F'],
@@ -146,12 +148,38 @@ begin
     sorry },
 end
 
+lemma tensor_product_aux_restrict_apply' (x y : E ⊗[ℝ] F)
+  (E' : subspace ℝ E) (F' : subspace ℝ F) (x' y' : E' ⊗[ℝ] F')
+  (hx : x = tensor_submodule E F E' F' x')
+  (hy : y = tensor_submodule E F E' F' y') :
+  (tensor_product_aux E F (x ⊗ₜ y)) =
+  (tensor_product_aux E' F' (x' ⊗ₜ y')) :=
+begin
+  rw [hx, hy], revert x,
+  induction x' using tensor_product.induction_on with e' f' x₁ x₂ ih₁ ih₂,
+  { simp only [map_zero, tensor_product.zero_tmul], exact λ _ _, rfl, },
+  { rw [tensor_submodule_apply_tmul], revert y,
+    induction y' using tensor_product.induction_on with e'' f'' y₁ y₂ ih₁ ih₂,
+    { simp only [map_zero, tensor_product.tmul_zero], exact λ _ _ _ _, rfl, },
+    { intros x h y h', simpa only [tensor_submodule_apply_tmul, tensor_product_aux_apply], },
+    { intros x hx y hy,
+      rw [map_add, tensor_product.tmul_add, map_add, tensor_product.tmul_add,
+        map_add, ih₁, ih₂], refl, refl, refl, refl, }, },
+  { intros x hx,
+    simp only [tensor_product.add_tmul, map_add],
+    rw [ih₁, ih₂], refl, refl, },
+end
+
 lemma tensor_product_aux_restrict_apply (x y : E ⊗[ℝ] F)
   (E' : subspace ℝ E) (F' : subspace ℝ F)
   (hx : x ∈ (tensor_submodule E F E' F').range)
   (hy : y ∈ (tensor_submodule E F E' F').range) :
   (tensor_product_aux E F (x ⊗ₜ y)) =
-  (tensor_product_aux E' F' (hx.some ⊗ₜ hy.some)) :=  sorry
+  (tensor_product_aux E' F' (hx.some ⊗ₜ hy.some)) :=
+begin
+  apply tensor_product_aux_restrict_apply',
+  exacts [hx.some_spec.symm, hy.some_spec.symm],
+end
 
 instance tensor_product' : inner_product_space ℝ (E ⊗[ℝ] F) :=
 of_core
