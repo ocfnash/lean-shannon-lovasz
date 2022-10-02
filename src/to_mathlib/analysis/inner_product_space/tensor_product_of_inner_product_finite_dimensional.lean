@@ -162,6 +162,7 @@ begin
   apply_fun canonical_basis_repr_symm E F at h,
   erw [fun_like.congr_fun (canonical_basis_repr_symm_apply_apply E F) x,
     fun_like.congr_fun (canonical_basis_repr_symm_apply_apply E F) y] at h,
+  exact h,
 end
 
 @[simps] def canonical_basis :
