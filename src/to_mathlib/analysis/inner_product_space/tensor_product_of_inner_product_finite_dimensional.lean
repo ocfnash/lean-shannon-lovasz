@@ -1,5 +1,6 @@
 import to_mathlib.analysis.inner_product_space.tensor_product
 import analysis.inner_product_space.gram_schmidt_ortho
+import data.fin.basic
 
 noncomputable theory
 
@@ -79,17 +80,89 @@ begin
     intros eq1 eq2, refine h _, ext, rw eq1.symm, rw eq2.symm, },
 end
 
+lemma canonical_basis_repr_symm_apply_apply_on_basis (i j) :
+  canonical_basis_repr_symm E F (canonical_basis_repr E F $
+    (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis i ⊗ₜ
+    (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ F)).to_basis j) =
+  (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis i ⊗ₜ
+  (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ F)).to_basis j :=
+begin
+  rw [finsupp.lsum_apply, finsupp.sum],
+  simp_rw [linear_map.coe_mk, canonical_basis_repr_tmul,
+    basis.coord_apply],
+  have seq : (canonical_basis_repr E F $
+    (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis i ⊗ₜ
+    (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ F)).to_basis j).support =
+  ({i} : finset _).product ({j}),
+  { ext, split; intros h;
+    simp only [finset.product_singleton, finset.map_singleton, function.embedding.coe_fn_mk,
+      finset.mem_singleton, canonical_basis_repr_tmul, finsupp.mem_support_iff] at h ⊢,
+    { rw [mul_ne_zero_iff, basis.coord_apply, basis.coord_apply] at h,
+      rw [basis.repr_self, basis.repr_self, finsupp.single_apply, finsupp.single_apply] at h,
+      rw prod.ext_iff, split_ifs at h with h1 h2, exact ⟨h1.symm, h2.symm⟩,
+      exact false.elim (h.2 rfl), exact false.elim (h.1 rfl), exact false.elim (h.1 rfl), },
+    { rw prod.ext_iff at h, rw [mul_ne_zero_iff, basis.coord_apply, basis.coord_apply,
+        basis.repr_self, basis.repr_self, finsupp.single_apply, finsupp.single_apply,
+        if_pos h.1.symm, if_pos h.2.symm], split; norm_num, }, },
+    simp_rw seq, rw [finset.singleton_product_singleton, finset.sum_singleton],
+    dsimp only, rw [basis.repr_self, basis.repr_self, finsupp.single_apply, finsupp.single_apply,
+      if_pos rfl, if_pos rfl, one_mul, one_smul, orthonormal_basis.coe_to_basis,
+      orthonormal_basis.coe_to_basis],
+end
+
 lemma canonical_basis_repr_symm_apply_apply :
   (canonical_basis_repr_symm E F).comp (canonical_basis_repr E F) = linear_map.id :=
 begin
-  apply tensor_product.algebra_tensor_module.ext, intros e f, sorry
+  apply tensor_product.algebra_tensor_module.ext, intros e f,
+  conv_lhs { rw [←(gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis.total_repr e,
+    ←(gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ F)).to_basis.total_repr f] },
+  rw [finsupp.total_apply, finsupp.total_apply, finsupp.sum, finsupp.sum, linear_map.id_apply,
+    sum_tensor_sum, linear_map.comp_apply, map_sum, map_sum],
+  simp_rw [tensor_product.tmul_smul, tensor_product.smul_tmul, tensor_product.tmul_smul, ←mul_smul,
+    map_smul, canonical_basis_repr_symm_apply_apply_on_basis],
+  conv_rhs { rw [←(gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis.total_repr e,
+    ←(gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ F)).to_basis.total_repr f] },
+  rw [finsupp.total_apply, finsupp.total_apply, finsupp.sum, finsupp.sum, sum_tensor_sum],
+  rw finset.sum_congr rfl,
+  rintros ⟨i, j⟩ h, dsimp only,
+  rw [tensor_product.tmul_smul, tensor_product.smul_tmul, tensor_product.tmul_smul, ←mul_smul],
 end
-
-lemma canonical_basis_repr_inj : function.injective (canonical_basis_repr E F) := sorry
 
 lemma canonical_basis_repr_surj : function.surjective (canonical_basis_repr E F) :=
 λ x, ⟨canonical_basis_repr_symm E F x, fun_like.congr_fun
   (canonical_basis_repr_apply_symm_apply E F) x⟩
+
+def finsupp.from_tensor : ((fin (finite_dimensional.finrank ℝ E) →₀ ℝ) ⊗[ℝ] (fin (finite_dimensional.finrank ℝ F) →₀ ℝ))
+  →ₗ[ℝ] (fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F) →₀ ℝ) :=
+tensor_product.lift
+{ to_fun := λ e,
+  { to_fun := λ f, (⟨e.support ×ˢ f.support, λ i, e i.1 * f i.2, begin
+      rintros ⟨i, j⟩, simp only [finset.mem_product, finsupp.mem_support_iff, ne.def, mul_eq_zero], tauto,
+    end⟩ : fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F) →₀ ℝ),
+    map_add' := λ x y, begin
+      ext1 ⟨i, j⟩, rw [finsupp.coe_mk, finsupp.add_apply, finsupp.add_apply, finsupp.coe_mk, finsupp.coe_mk, mul_add],
+    end,
+    map_smul' := λ r s, begin
+      ext1 ⟨i, j⟩, rw [finsupp.coe_mk, finsupp.smul_apply, ring_hom.id_apply, finsupp.coe_smul, pi.smul_apply,
+        finsupp.coe_mk, smul_eq_mul, smul_eq_mul], ring1,
+    end },
+  map_add' := λ x y, begin
+    ext k ⟨i, j⟩, simp only [linear_map.comp_apply, linear_map.coe_mk, finsupp.coe_mk, linear_map.add_apply, finsupp.add_apply,
+      finsupp.lsingle_apply], ring1,
+  end,
+  map_smul' := λ r x, begin
+    ext k ⟨i, j⟩, simp only [linear_map.comp_apply, linear_map.coe_mk, finsupp.coe_mk, linear_map.add_apply, finsupp.add_apply,
+      finsupp.lsingle_apply, finsupp.coe_smul, finsupp.smul_apply, pi.smul_apply, ring_hom.id_apply,
+      linear_map.smul_apply, smul_eq_mul], ring1,
+  end }
+
+lemma canonical_basis_repr_inj : function.injective (canonical_basis_repr E F) :=
+begin
+  intros x y h,
+  apply_fun canonical_basis_repr_symm E F at h,
+  erw [fun_like.congr_fun (canonical_basis_repr_symm_apply_apply E F) x,
+    fun_like.congr_fun (canonical_basis_repr_symm_apply_apply E F) y] at h,
+end
 
 @[simps] def canonical_basis :
   basis (fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F)) ℝ
