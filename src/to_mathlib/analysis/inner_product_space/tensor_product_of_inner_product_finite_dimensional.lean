@@ -403,6 +403,10 @@ of_core
   smul_left := λ x y r, by rw [is_R_or_C.conj_to_real,
     ← tensor_product.smul_tmul', map_smul, smul_eq_mul] }
 
+@[simp] lemma inner_tprod (e₁ e₂ : E) (f₁ f₂ : F) :
+  ⟪e₁ ⊗ₜ[ℝ] f₁, e₂ ⊗ₜ[ℝ] f₂⟫ = ⟪e₁, e₂⟫ * ⟪f₁, f₂⟫ :=
+tensor_product_aux_apply E F e₁ e₂ f₁ f₂
+
 end possibly_infinite
 
 end inner_product_space
