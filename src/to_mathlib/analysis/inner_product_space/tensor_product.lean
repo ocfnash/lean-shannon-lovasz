@@ -176,6 +176,7 @@ This is still a gap in Mathlib that is worth filling. -/
 --   intros x,
 --   admit,
 -- end
+example : true := trivial
 
 end inner_product_space
 
