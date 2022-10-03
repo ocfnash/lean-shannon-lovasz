@@ -1,7 +1,6 @@
 import linear_algebra.tensor_power
 import analysis.inner_product_space.pi_L2
 import to_mathlib.analysis.inner_product_space.tensor_product
-import to_mathlib.analysis.inner_product_space.tensor_product_of_inner_product_finite_dimensional
 import to_mathlib.combinatorics.simple_graph.strong_product
 import to_mathlib.combinatorics.simple_graph.independent
 
