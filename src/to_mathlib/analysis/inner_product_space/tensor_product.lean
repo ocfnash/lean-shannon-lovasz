@@ -444,11 +444,4 @@ tensor_product_aux_apply E F e₁ e₂ f₁ f₂
 
 end possibly_infinite
 
-instance (k : ℕ) : inner_product_space ℝ (⨂[ℝ]^k E) := sorry
-
-@[simp] lemma inner_tpow {k : ℕ} (e₁ e₂ : fin k → E) :
-  ⟪tensor_power.tpow ℝ e₁, tensor_power.tpow ℝ e₂⟫ = ∏ i, ⟪e₁ i, e₂ i⟫ :=
-sorry
-
-
 end inner_product_space
