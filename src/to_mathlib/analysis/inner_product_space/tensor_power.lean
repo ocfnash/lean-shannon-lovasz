@@ -54,16 +54,7 @@ def core_zero_power : inner_product_space.core ℝ (⨂[ℝ]^0 E) :=
     (pi_tensor_product.is_empty_equiv (fin 0) y),
   conj_sym := λ x y, by rw [is_R_or_C.conj_to_real, mul_comm],
   nonneg_re := λ x, by simpa only [is_R_or_C.re_to_real] using mul_self_nonneg _,
-  definite := λ x hx,
-  begin
-    rw mul_self_eq_zero at hx,
-    have hx' : x ∈ linear_map.ker (pi_tensor_product.is_empty_equiv (fin 0) : ⨂[ℝ]^0 E ≃ₗ[ℝ] ℝ),
-    { rwa linear_map.mem_ker, },
-    have h' := linear_map.ker_eq_bot.mpr
-      ((pi_tensor_product.is_empty_equiv (fin 0) : ⨂[ℝ]^0 E ≃ₗ[ℝ] ℝ).injective),
-    erw h' at hx',
-    exact hx',
-  end,
+  definite := λ x hx, by rwa [mul_self_eq_zero, linear_equiv.map_eq_zero] at hx,
   add_left := λ x y z, by simp only [map_add, add_mul],
   smul_left := λ x y r, by simp only [map_smul, smul_eq_mul, is_R_or_C.conj_to_real, mul_assoc] }
 
