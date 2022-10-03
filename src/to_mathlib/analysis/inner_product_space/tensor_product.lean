@@ -11,19 +11,6 @@ open_locale real_inner_product_space tensor_product big_operators
 
 namespace inner_product_space
 
-lemma tensor_sum {α β H I : Type*} {α : Type*}
-  [add_comm_monoid H] [add_comm_monoid I] [module ℝ H] [module ℝ I]
-  (s : finset α) (e : H) (f : α → I) :
-  e ⊗ₜ[ℝ] ∑ a in s, f a = ∑ a in s, e ⊗ₜ f a :=
-begin
-  classical,
-  refine finset.induction_on s _ _,
-  { rw [finset.sum_empty, tensor_product.tmul_zero, finset.sum_empty], },
-  { intros a s' ha ih,
-    rw [finset.sum_insert, tensor_product.tmul_add, ih, finset.sum_insert];
-    assumption },
-end
-
 lemma sum_tensor_sum {α β H I : Type*}
   [add_comm_monoid H] [add_comm_monoid I] [module ℝ H] [module ℝ I]
   (s : finset α) (t : finset β)
@@ -58,7 +45,7 @@ begin
         tauto, }, },
     rw [this, finset.sum_union, finset.singleton_product, add_comm],
     congr' 1,
-    rw [finset.sum_map, tensor_sum], refl, exact H, exact I,
+    rw [finset.sum_map, tensor_product.tmul_sum], refl,
     { rw finset.disjoint_iff_inter_eq_empty,
       rw finset.eq_empty_iff_forall_not_mem,
       rintros ⟨a', b'⟩ r,
