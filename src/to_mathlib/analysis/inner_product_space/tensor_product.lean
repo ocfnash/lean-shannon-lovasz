@@ -57,8 +57,7 @@ begin
         tauto, }, },
     rw [this, finset.sum_union, finset.singleton_product, add_comm],
     congr' 1,
-    simp only [finset.sum_map, embedding.coe_fn_mk],
-    apply tensor_sum,
+    rw [finset.sum_map, tensor_sum], refl, exact H, exact I,
     { rw finset.disjoint_iff_inter_eq_empty,
       rw finset.eq_empty_iff_forall_not_mem,
       rintros ⟨a', b'⟩ r,
@@ -87,12 +86,11 @@ linear_map.mul' ℝ ℝ ∘ₗ
   tensor_product_aux E F ((e₁ ⊗ₜ[ℝ] f₁) ⊗ₜ[ℝ] (e₂ ⊗ₜ[ℝ] f₂)) = ⟪e₁, e₂⟫ * ⟪f₁, f₂⟫ :=
 by simp [tensor_product_aux, as_tensor]
 
--- instance (k : ℕ) : inner_product_space ℝ (⨂[ℝ]^k E) := sorry
+instance (k : ℕ) : inner_product_space ℝ (⨂[ℝ]^k E) := sorry
 
--- @[simp] lemma inner_tpow {k : ℕ} (e₁ e₂ : fin k → E) :
---   ⟪tensor_power.tpow ℝ e₁, tensor_power.tpow ℝ e₂⟫ = ∏ i, ⟪e₁ i, e₂ i⟫ :=
--- sorry
+@[simp] lemma inner_tpow {k : ℕ} (e₁ e₂ : fin k → E) :
+  ⟪tensor_power.tpow ℝ e₁, tensor_power.tpow ℝ e₂⟫ = ∏ i, ⟪e₁ i, e₂ i⟫ :=
+sorry
 
-example : true := trivial
 
 end inner_product_space

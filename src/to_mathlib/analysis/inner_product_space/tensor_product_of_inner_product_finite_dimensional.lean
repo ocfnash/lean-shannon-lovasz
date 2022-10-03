@@ -8,16 +8,12 @@ open_locale real_inner_product_space tensor_product big_operators
 
 namespace inner_product_space
 
-variables (E F : Type*) [linear_order E] [linear_order F]
+variables (E F : Type*)
 variables [inner_product_space ℝ E] [inner_product_space ℝ F]
 
 section finite
 
 variables [finite_dimensional ℝ E] [finite_dimensional ℝ F]
-
-#check basis (fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F)) ℝ
- (E ⊗[ℝ] F)
-#check (gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E))
 
 @[reducible] def canonical_basis_repr_aux (e : E) (f : F) : fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F) →₀ ℝ :=
 { support := ((gram_schmidt_orthonormal_basis ℝ (finite_dimensional.fin_basis ℝ E)).to_basis.repr e).support ×ˢ
@@ -131,30 +127,6 @@ end
 lemma canonical_basis_repr_surj : function.surjective (canonical_basis_repr E F) :=
 λ x, ⟨canonical_basis_repr_symm E F x, fun_like.congr_fun
   (canonical_basis_repr_apply_symm_apply E F) x⟩
-
-def finsupp.from_tensor : ((fin (finite_dimensional.finrank ℝ E) →₀ ℝ) ⊗[ℝ] (fin (finite_dimensional.finrank ℝ F) →₀ ℝ))
-  →ₗ[ℝ] (fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F) →₀ ℝ) :=
-tensor_product.lift
-{ to_fun := λ e,
-  { to_fun := λ f, (⟨e.support ×ˢ f.support, λ i, e i.1 * f i.2, begin
-      rintros ⟨i, j⟩, simp only [finset.mem_product, finsupp.mem_support_iff, ne.def, mul_eq_zero], tauto,
-    end⟩ : fin (finite_dimensional.finrank ℝ E) × fin (finite_dimensional.finrank ℝ F) →₀ ℝ),
-    map_add' := λ x y, begin
-      ext1 ⟨i, j⟩, rw [finsupp.coe_mk, finsupp.add_apply, finsupp.add_apply, finsupp.coe_mk, finsupp.coe_mk, mul_add],
-    end,
-    map_smul' := λ r s, begin
-      ext1 ⟨i, j⟩, rw [finsupp.coe_mk, finsupp.smul_apply, ring_hom.id_apply, finsupp.coe_smul, pi.smul_apply,
-        finsupp.coe_mk, smul_eq_mul, smul_eq_mul], ring1,
-    end },
-  map_add' := λ x y, begin
-    ext k ⟨i, j⟩, simp only [linear_map.comp_apply, linear_map.coe_mk, finsupp.coe_mk, linear_map.add_apply, finsupp.add_apply,
-      finsupp.lsingle_apply], ring1,
-  end,
-  map_smul' := λ r x, begin
-    ext k ⟨i, j⟩, simp only [linear_map.comp_apply, linear_map.coe_mk, finsupp.coe_mk, linear_map.add_apply, finsupp.add_apply,
-      finsupp.lsingle_apply, finsupp.coe_smul, finsupp.smul_apply, pi.smul_apply, ring_hom.id_apply,
-      linear_map.smul_apply, smul_eq_mul], ring1,
-  end }
 
 lemma canonical_basis_repr_inj : function.injective (canonical_basis_repr E F) :=
 begin
@@ -408,5 +380,30 @@ of_core
 tensor_product_aux_apply E F e₁ e₂ f₁ f₂
 
 end possibly_infinite
+
+
+def lift_equiv_left {M N N' R : Type*} [add_comm_monoid M] [add_comm_monoid N] [add_comm_monoid N']
+  [comm_semiring R] [module R M] [module R N] [module R N'] (l : N ≃ₗ[R] N') :
+  M ⊗[R] N ≃ₗ[R] M ⊗[R] N' :=
+{ to_fun := tensor_product.hom_tensor_hom_map R M N M N' (linear_map.id ⊗ₜ[R] l),
+  map_add' := map_add _,
+  map_smul' := map_smul _,
+  inv_fun := tensor_product.hom_tensor_hom_map R M N' M N (linear_map.id ⊗ₜ[R] l.symm),
+  left_inv := λ r, begin
+    induction r using tensor_product.induction_on with x y x y ihx ihy,
+    { simp only [map_zero] },
+    { rw [tensor_product.hom_tensor_hom_map_apply, tensor_product.hom_tensor_hom_map_apply],
+      simp only [tensor_product.map_tmul, linear_map.id_coe, id.def, linear_equiv.coe_coe,
+        linear_equiv.symm_apply_apply], },
+    { simp only [map_add, ihx, ihy] },
+  end,
+  right_inv := λ x, begin
+    induction x using tensor_product.induction_on with x y x y ihx ihy,
+    { simp only [map_zero] },
+    { rw [tensor_product.hom_tensor_hom_map_apply, tensor_product.hom_tensor_hom_map_apply],
+      simp only [tensor_product.map_tmul, linear_map.id_coe, id.def, linear_equiv.coe_coe,
+        linear_equiv.apply_symm_apply], },
+    { simp only [map_add, ihx, ihy] },
+  end }
 
 end inner_product_space
