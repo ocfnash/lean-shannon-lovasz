@@ -37,7 +37,23 @@ sorry
 
 @[simp] lemma lovasz_number_at_lovasz_umbrella_eq :
   lovasz_umbrella.lovasz_number_at e₁ = sqrt 5 :=
-sorry
+begin
+  dunfold simple_graph.orthogonal_representation.lovasz_number_at,
+  simp_rw [inner_lovasz_umbrella_e₁, ←inv_eq_one_div, div_inv_eq_mul],
+  rw [show ∥e₁∥ = 1, from _],
+  simp_rw [pow_two, one_mul],
+  rw [supr, real.Sup_def, dif_pos],
+  generalize_proofs h,
+  refine le_antisymm _ _,
+  { refine h.some_spec.2 _, rintros _ ⟨y, rfl⟩, exact le_refl _, },
+  { exact h.some_spec.1 ⟨0, rfl⟩, },
+  { refine ⟨⟨_, ⟨0, rfl⟩⟩, ⟨sqrt 5, _⟩⟩,
+    rintros _ ⟨y, rfl⟩, refl, },
+  { erw [norm_eq_sqrt_real_inner, sqrt_eq_iff_mul_self_eq, one_mul,
+      euclidean_space.inner_single_left, map_one, one_mul],
+    dunfold e₁, rw [euclidean_space.single_apply, if_pos rfl],
+    exact real_inner_self_nonneg, norm_num },
+end
 
 /-- The easier direction.
 
