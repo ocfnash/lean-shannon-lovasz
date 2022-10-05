@@ -34,8 +34,14 @@ proofs below. -/
 instance [fintype V] [decidable_eq V] :
   inhabited (G.orthogonal_representation (euclidean_space ℝ V)) :=
 ⟨{ to_fun := λ v, euclidean_space.single v 1,
-   norm_eq_one' := sorry,
-   inner_eq_zero_of_ne_of_not_adj' := sorry, }⟩
+   norm_eq_one' := λ v, begin
+    rw [norm_eq_sqrt_real_inner, real.sqrt_eq_iff_mul_self_eq, one_mul,
+      euclidean_space.inner_single_left, map_one, one_mul, euclidean_space.single_apply, if_pos rfl],
+    exact real_inner_self_nonneg, norm_num,
+   end,
+   inner_eq_zero_of_ne_of_not_adj' := λ v w h nadj, begin
+    rw [euclidean_space.inner_single_left, map_one, one_mul, euclidean_space.single_apply, if_neg h],
+   end, }⟩
 
 variables {G E} (ρ : orthogonal_representation G E)
 
