@@ -48,6 +48,13 @@ variables {G E} (ρ : orthogonal_representation G E)
 @[simp] lemma norm_eq_one {v : V} : ∥ρ v∥ = 1 :=
 ρ.norm_eq_one' v
 
+@[simp] lemma inner_self_eq_one (v : V) : inner (ρ v) (ρ v) = (1 : ℝ) :=
+begin
+  have : ∥ρ v∥ = 1 := ρ.norm_eq_one,
+  rw [norm_eq_sqrt_inner, real.sqrt_eq_iff_mul_self_eq, mul_one, is_R_or_C.re_to_real] at this,
+  exact this.symm, exact real_inner_self_nonneg, norm_num,
+end
+
 lemma inner_eq_zero_of_ne_of_not_adj {v w : V} (h₁ : v ≠ w) (h₂ : ¬ G.adj v w) :
   ⟪ρ v, ρ w⟫ = 0 :=
 ρ.inner_eq_zero_of_ne_of_not_adj' v w h₁ h₂
@@ -86,10 +93,25 @@ representation of the graph `G.strong_prod H` on `E ⊗ F`.
 
 Actually we probably won't need this definition for this project but it might be good practice
 to fill in the proofs below. -/
-def prod : orthogonal_representation (G.strong_prod H) (E ⊗[ℝ] F) :=
+@[simps] def prod : orthogonal_representation (G.strong_prod H) (E ⊗[ℝ] F) :=
 { to_fun := λ x, (ρ x.1) ⊗ₜ (ρ' x.2),
-  norm_eq_one' := sorry,
-  inner_eq_zero_of_ne_of_not_adj' := sorry, }
+  norm_eq_one' := λ ⟨v, w⟩, begin
+    rw [norm_eq_sqrt_real_inner, real.sqrt_eq_iff_mul_self_eq, one_mul,
+      inner_product_space.inner_tprod, ρ.inner_self_eq_one, one_mul,
+      ρ'.inner_self_eq_one],
+    exact real_inner_self_nonneg, norm_num,
+  end,
+  inner_eq_zero_of_ne_of_not_adj' := λ ⟨v, w⟩ ⟨v', w'⟩ neq nadj,
+  begin
+    rw [simple_graph.strong_prod_adj, not_and_distrib, not_not, not_and_distrib,
+      not_or_distrib, not_or_distrib] at nadj,
+    rw [inner_product_space.inner_tprod],
+    dsimp only at nadj,
+    rcases nadj with h|⟨h1, h2⟩|⟨h1, h2⟩,
+    { exact false.elim (neq h) },
+    { rw [ρ.inner_eq_zero_of_ne_of_not_adj h1 h2, zero_mul] },
+    { rw [ρ'.inner_eq_zero_of_ne_of_not_adj h1 h2, mul_zero] },
+  end, }
 
 @[simp] lemma prod_lovasz_number_at [finite V] [finite W] (e : E) (f : F) :
   (ρ.prod ρ').lovasz_number_at (e ⊗ₜ f) = (ρ.lovasz_number_at e) * (ρ'.lovasz_number_at f) :=
