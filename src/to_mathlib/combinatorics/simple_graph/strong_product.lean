@@ -19,13 +19,13 @@ good practice for `strong_pi` below, which we do need. -/
 infix `⊠`:70 := strong_prod
 
 /-- The strong product of a family of graphs: Gᵢ for `i` in some index set `ι`. -/
-def strong_pi {ι : Type*} {V : ι → Type*} (G : Π i, simple_graph (V i)) : simple_graph (Π i, V i) :=
+@[simps] def strong_pi {ι : Type*} {V : ι → Type*} (G : Π i, simple_graph (V i)) : simple_graph (Π i, V i) :=
 { adj := λ x y, x ≠ y ∧ ∀ i, (x i = y i ∨ (G i).adj (x i) (y i)),
   symm := λ x y ⟨h1, h2⟩, ⟨h1.symm, λ i, by { specialize h2 i, tauto }⟩,
   loopless := λ x ⟨h, _⟩, h rfl, }
 
 /-- The strong product of a graph with itself `k` times. -/
-def strong_pow {V : Type*} (k : ℕ) (G : simple_graph V) : simple_graph (fin k → V) :=
+@[reducible] def strong_pow {V : Type*} (k : ℕ) (G : simple_graph V) : simple_graph (fin k → V) :=
 strong_pi $ λ i, G
 
 notation `⊠^`:70 := strong_pow

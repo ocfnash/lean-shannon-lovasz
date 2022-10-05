@@ -122,8 +122,21 @@ sorry
 product `G ⊠ G ⊠ ⋯ ⊠ G` in `E ⊗ E ⊗ ⋯ ⊗ E`. -/
 def pow (k : ℕ) : orthogonal_representation (⊠^k G) (⨂[ℝ]^k E) :=
 { to_fun := λ x, tensor_power.tpow ℝ (ρ ∘ x),
-  norm_eq_one' := sorry,
-  inner_eq_zero_of_ne_of_not_adj' := sorry, }
+  norm_eq_one' := λ v, begin
+    rw [norm_eq_sqrt_real_inner, real.sqrt_eq_iff_mul_self_eq, one_mul,
+      inner_product_space.tensor_power.inner_tpow],
+    simp_rw [ρ.inner_self_eq_one, finset.prod_const_one],
+    exact real_inner_self_nonneg, norm_num
+  end,
+  inner_eq_zero_of_ne_of_not_adj' := λ v w neq nadj, begin
+    rw [simple_graph.strong_pi_adj, not_and_distrib, not_forall] at nadj,
+    simp_rw [not_or_distrib] at nadj,
+    rw [inner_product_space.tensor_power.inner_tpow],
+    rcases nadj with h|⟨x, ⟨h1, h2⟩⟩,
+    { exact false.elim (h neq) },
+    { rw [finset.prod_eq_zero_iff],
+      exact ⟨x, finset.mem_univ _, ρ.inner_eq_zero_of_ne_of_not_adj h1 h2⟩, },
+  end, }
 
 @[simp] lemma pow_lovasz_number_at {k : ℕ} [finite V] (e : fin k → E) :
   (ρ.pow k).lovasz_number_at (tensor_power.tpow ℝ e) = ∏ i, ρ.lovasz_number_at (e i) :=
