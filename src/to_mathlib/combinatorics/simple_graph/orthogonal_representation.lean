@@ -144,7 +144,7 @@ sorry
 
 lemma pow_lovasz_number_at' {k : ℕ} [finite V] (e : E) :
   (ρ.pow k).lovasz_number_at (tensor_power.tpow ℝ (λ i, e)) = (ρ.lovasz_number_at e)^k :=
-sorry
+by rw [pow_lovasz_number_at, finset.prod_const, finset.card_univ, fintype.card_fin]
 
 end orthogonal_representation
 
