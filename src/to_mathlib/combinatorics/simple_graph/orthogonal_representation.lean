@@ -114,7 +114,9 @@ to fill in the proofs below. -/
     { rw [ρ'.inner_eq_zero_of_ne_of_not_adj h1 h2, mul_zero] },
   end, }
 
-lemma real.Sup_mul_Sup (s : set ℝ) (t : set ℝ) :
+lemma real.Sup_mul_Sup
+  (s : set ℝ) (hs : ∀ (a : ℝ), a ∈ s → 0 ≤ a)
+  (t : set ℝ) (ht : ∀ (a : ℝ), a ∈ t → 0 ≤ a):
   Sup s * Sup t = Sup (s * t) :=
 sorry
 
@@ -127,20 +129,24 @@ begin
   rw [lovasz_number_at_eq_csupr, lovasz_number_at_eq_csupr],
   change Sup _ = Sup _ * Sup _,
   rw real.Sup_mul_Sup, congr' 1, ext1 x, split,
-  { rintros ⟨⟨v, w⟩, rfl⟩, dsimp only,
+  sorry { rintros ⟨⟨v, w⟩, rfl⟩, dsimp only,
     simp_rw [←real_inner_self_eq_norm_sq],
     refine ⟨inner e e / (inner (ρ v) e)^2, inner f f / (inner (ρ' w) f)^2, ⟨_, rfl⟩, ⟨_, rfl⟩, _⟩,
     conv_rhs { rw [real_inner_self_eq_norm_sq, real_inner_self_eq_norm_sq] },
     rw [real.sqrt_mul, real.sqrt_sq, real.sqrt_sq, mul_pow, ←real_inner_self_eq_norm_sq,
       ←real_inner_self_eq_norm_sq, mul_pow, mul_div, mul_div_assoc, div_mul, mul_div_assoc],
     field_simp, exact norm_nonneg f, exact norm_nonneg e, exact sq_nonneg _,},
-  { rintros ⟨_, _, ⟨v, rfl⟩, ⟨w, rfl⟩, rfl⟩,
+  sorry { rintros ⟨_, _, ⟨v, rfl⟩, ⟨w, rfl⟩, rfl⟩,
     dsimp only, rw [←real_inner_self_eq_norm_sq, ←real_inner_self_eq_norm_sq],
     rw set.mem_range, refine ⟨⟨v, w⟩, _⟩,
     rw [real_inner_self_eq_norm_sq, real_inner_self_eq_norm_sq, real.sqrt_mul, mul_pow,
       real.sqrt_sq, real.sqrt_sq, pow_two, pow_two, pow_two, pow_two, pow_two], dsimp only,
       field_simp, congr' 1, ring1, exact norm_nonneg f, exact norm_nonneg e,
       rw pow_two, exact mul_self_nonneg _ },
+  { rintros _ ⟨x, rfl⟩, dsimp only,
+    apply div_nonneg; rw pow_two; exact mul_self_nonneg _,  },
+  { rintros _ ⟨x, rfl⟩, dsimp only,
+    apply div_nonneg; rw pow_two; exact mul_self_nonneg _,  },
 end
 
 /-- If `ρ` is an orthogonal representation of a graph `G` in `E`, then
