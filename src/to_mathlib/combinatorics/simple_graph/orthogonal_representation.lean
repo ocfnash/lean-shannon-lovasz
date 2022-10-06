@@ -4,11 +4,12 @@ import to_mathlib.analysis.inner_product_space.tensor_product
 import to_mathlib.analysis.inner_product_space.tensor_power
 import to_mathlib.combinatorics.simple_graph.strong_product
 import to_mathlib.combinatorics.simple_graph.independent
+import algebra.order.field
 
 noncomputable theory
 
 open set function
-open_locale real_inner_product_space tensor_product big_operators
+open_locale real_inner_product_space tensor_product big_operators pointwise
 
 namespace simple_graph
 
@@ -113,14 +114,39 @@ to fill in the proofs below. -/
     { rw [ρ'.inner_eq_zero_of_ne_of_not_adj h1 h2, mul_zero] },
   end, }
 
+lemma real.Sup_mul_Sup (s : set ℝ) (t : set ℝ) :
+  Sup s * Sup t = Sup (s * t) :=
+sorry
+
 @[simp] lemma prod_lovasz_number_at [finite V] [finite W] (e : E) (f : F) :
   (ρ.prod ρ').lovasz_number_at (e ⊗ₜ f) = (ρ.lovasz_number_at e) * (ρ'.lovasz_number_at f) :=
-sorry
+begin
+  rw [lovasz_number_at],
+  simp_rw [prod_to_fun, inner_product_space.inner_tprod,
+    norm_eq_sqrt_real_inner, inner_product_space.inner_tprod],
+  rw [lovasz_number_at_eq_csupr, lovasz_number_at_eq_csupr],
+  change Sup _ = Sup _ * Sup _,
+  rw real.Sup_mul_Sup, congr' 1, ext1 x, split,
+  { rintros ⟨⟨v, w⟩, rfl⟩, dsimp only,
+    simp_rw [←real_inner_self_eq_norm_sq],
+    refine ⟨inner e e / (inner (ρ v) e)^2, inner f f / (inner (ρ' w) f)^2, ⟨_, rfl⟩, ⟨_, rfl⟩, _⟩,
+    conv_rhs { rw [real_inner_self_eq_norm_sq, real_inner_self_eq_norm_sq] },
+    rw [real.sqrt_mul, real.sqrt_sq, real.sqrt_sq, mul_pow, ←real_inner_self_eq_norm_sq,
+      ←real_inner_self_eq_norm_sq, mul_pow, mul_div, mul_div_assoc, div_mul, mul_div_assoc],
+    field_simp, exact norm_nonneg f, exact norm_nonneg e, exact sq_nonneg _,},
+  { rintros ⟨_, _, ⟨v, rfl⟩, ⟨w, rfl⟩, rfl⟩,
+    dsimp only, rw [←real_inner_self_eq_norm_sq, ←real_inner_self_eq_norm_sq],
+    rw set.mem_range, refine ⟨⟨v, w⟩, _⟩,
+    rw [real_inner_self_eq_norm_sq, real_inner_self_eq_norm_sq, real.sqrt_mul, mul_pow,
+      real.sqrt_sq, real.sqrt_sq, pow_two, pow_two, pow_two, pow_two, pow_two], dsimp only,
+      field_simp, congr' 1, ring1, exact norm_nonneg f, exact norm_nonneg e,
+      rw pow_two, exact mul_self_nonneg _ },
+end
 
 /-- If `ρ` is an orthogonal representation of a graph `G` in `E`, then
 `(x₁, x₂, …, xₖ) ↦ (ρ x₁) ⊗ (ρ x₂) ⊗ ⋯ ⊗ (ρ xₖ)` defines an orthogonal representation of the strong
 product `G ⊠ G ⊠ ⋯ ⊠ G` in `E ⊗ E ⊗ ⋯ ⊗ E`. -/
-def pow (k : ℕ) : orthogonal_representation (⊠^k G) (⨂[ℝ]^k E) :=
+@[simps] def pow (k : ℕ) : orthogonal_representation (⊠^k G) (⨂[ℝ]^k E) :=
 { to_fun := λ x, tensor_power.tpow ℝ (ρ ∘ x),
   norm_eq_one' := λ v, begin
     rw [norm_eq_sqrt_real_inner, real.sqrt_eq_iff_mul_self_eq, one_mul,
