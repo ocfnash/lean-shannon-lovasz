@@ -1,6 +1,7 @@
 import combinatorics.simple_graph.basic
 import order.antichain
 import set_theory.cardinal.finite
+import data.fintype.order
 
 noncomputable theory
 
@@ -54,8 +55,70 @@ since it can produce the "junk value" `0` for infinite graphs (via `nat.card`). 
 def independence_number : ℕ :=
 Sup $ nat.card ∘ coe_sort '' G.independent_set
 
-lemma independence_number_eq_bcsupr :
+instance independent_set_fintype [fintype V] :
+  fintype $ subtype G.independent_set :=
+fintype.of_injective (coe : subtype G.independent_set → set V) subtype.coe_injective
+
+lemma independent_number_bdd_above [fintype V] :
+  bdd_above $ nat.card ∘ coe_sort '' G.independent_set :=
+begin
+  obtain ⟨M, hM⟩ := fintype.exists_le (nat.card ∘ coe_sort : subtype G.independent_set → ℕ),
+  refine ⟨M, _⟩, rintros _ ⟨S, ⟨hx, rfl⟩⟩,
+  refine (hM ⟨S, hx⟩).trans _, refl,
+end
+
+lemma nat.find_eq_find_of_iff {p q : ℕ → Prop}
+  [decidable_pred (λ (n : ℕ), q n)] [decidable_pred (λ (n : ℕ), p n)]
+  (P : ∃ n, p n) (Q : ∃ n, q n) (h : ∀ n, p n ↔ q n) :
+  nat.find P = nat.find Q :=
+begin
+  have eq1 : p = q,
+  { ext, apply h },
+  unfreezingI { subst eq1 }, resetI,
+  have eq1 : P = Q := rfl,
+  rw eq1, congr,
+end
+
+lemma nat.supr_pos {p : Prop} (h : p) (f : p → ℕ) :
+  (⨆ (i : p), f i) = f h :=
+begin
+  rw [supr, nat.Sup_def], swap,
+  { refine ⟨f h, _⟩, rintros _ ⟨h', rfl⟩, exact le_refl _, },
+  rw nat.find_eq_iff, split,
+  { rintros _ ⟨h', rfl⟩, exact le_refl _ },
+  { rintros m hm r,
+    specialize r (f h) ⟨_, rfl⟩, linarith }
+end
+
+lemma independence_number_eq_bcsupr [fintype V] :
   G.independence_number = ⨆ s (hs : G.independent_set s), nat.card s :=
-sorry
+begin
+  classical,
+  obtain ⟨M, hM⟩ := G.independent_number_bdd_above,
+  rw [independence_number, supr, nat.Sup_def, nat.Sup_def],
+  work_on_goal 2
+  { refine ⟨M, _⟩, rintros n ⟨S, rfl⟩,
+    dsimp only, rw [supr, nat.Sup_def], swap,
+    { refine ⟨M, _⟩, rintros n ⟨hS, rfl⟩, dsimp only,
+      apply hM, rw [set.mem_image], exact ⟨_, hS, rfl⟩, } },
+  work_on_goal 3
+  { refine ⟨M, _⟩, rintros n ⟨S, hS, rfl⟩, apply hM,
+    rw set.mem_image, exact ⟨_, hS, rfl⟩, },
+  work_on_goal 2
+  { generalize_proofs h,
+    refine nat.find_le _, rintros _ ⟨hS, rfl⟩, dsimp only,
+    apply hM, refine ⟨_, hS, rfl⟩, },
+  { generalize_proofs h₁ h₂,
+    refine nat.find_eq_find_of_iff _ _ (λ n, _), split,
+    { rintros h _ ⟨S, rfl⟩, dsimp only,
+      rw [supr, nat.Sup_def], swap,
+      { refine ⟨M, _⟩, rintros _ ⟨hS, rfl⟩, dsimp only, apply hM,
+        exact ⟨_, hS, rfl⟩, },
+      rw nat.find_le_iff, refine ⟨n, le_refl _, _⟩,
+      rintro m ⟨hS, rfl⟩, apply h, exact ⟨_, hS, rfl⟩, },
+    { rintros h _ ⟨S, hS, rfl⟩, apply h, refine ⟨S, _⟩,
+      dsimp only, rw [nat.supr_pos], exact hS },
+  },
+end
 
 end simple_graph
