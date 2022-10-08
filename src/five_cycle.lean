@@ -1,5 +1,7 @@
 import analysis.special_functions.trigonometric.basic
 import analysis.normed_space.lp_space
+import data.fin.vec_notation
+
 import to_mathlib.combinatorics.simple_graph.cyclic
 import to_mathlib.combinatorics.simple_graph.shannon_capacity
 
@@ -55,8 +57,62 @@ begin
     exact real_inner_self_nonneg, norm_num },
 end
 
+abbreviation max_independent_set : set (fin 2 → fin 5) := { ![0,0], ![1,2], ![2, 4], ![3, 1], ![4, 3] }
+
+lemma mem_max_independent_set (i : fin 2 → fin 5) :
+  i ∈ max_independent_set ↔ i = ![0,0] ∨ i = ![1,2] ∨ i = ![2, 4] ∨ i = ![3, 1] ∨ i = ![4, 3] :=
+by rw [mem_insert_iff, mem_insert_iff, mem_insert_iff, mem_insert_iff, mem_singleton_iff]
+
+lemma card_max_independent_set : nat.card max_independent_set = 5 :=
+begin
+  rw [nat.card_eq_fintype_card, card_insert, card_insert, card_insert, card_insert, card_singleton],
+  { simp only [mem_singleton_iff], intros r, have : (3 : fin 5) = 4 := congr_fun r 0,
+    rw fin.ext_iff at this, change 3 = 4 at this, norm_num at this, },
+  { intro r, rw [mem_insert_iff, mem_singleton_iff] at r,
+    rcases r with r|r;
+    have := congr_fun r 0;
+    simp only [matrix.cons_val_zero] at this; norm_num at this, },
+  { intro r, rw [mem_insert_iff, mem_insert_iff, mem_singleton_iff] at r,
+    rcases r with r|r|r;
+    have := congr_fun r 0;
+    simp only [matrix.cons_val_zero] at this; norm_num at this, },
+  { intro r, rw [mem_insert_iff, mem_insert_iff, mem_insert_iff, mem_singleton_iff] at r,
+    rcases r with r|r|r|r;
+    have := congr_fun r 0;
+    simp only [matrix.cons_val_zero] at this; norm_num at this, },
+end
+
+lemma max_independent_set_is_independent :
+  (⊠^2 (cyclic 5)).independent_set max_independent_set :=
+begin
+  rintros ⟨i, hi⟩ ⟨j, hj⟩, rw [subtype.coe_mk, subtype.coe_mk],
+  rw mem_max_independent_set at hi hj,
+  rcases hi with hi|hi|hi|hi|hi;
+  rcases hj with hj|hj|hj|hj|hj;
+  rw [hi, hj],
+  all_goals { try { simp only [simple_graph.irrefl, not_false_iff] }, },
+  all_goals { simp only [strong_pi_adj, ne.def, not_and, not_forall], intros h, push_neg, },
+  all_goals { try { refine ⟨1, _⟩, split; simp only [matrix.cons_val_one, matrix.head_cons, ne.def], norm_num,
+    exact not_cyclic_5_adj_0_2 } },
+  all_goals { try { refine ⟨0, _⟩, split; simp only [matrix.cons_val_zero, ne.def], norm_num,
+    exact not_cyclic_5_adj_0_2 } },
+  all_goals { try { refine ⟨0, _⟩, split; simp only [matrix.cons_val_zero, ne.def], norm_num,
+    exact not_cyclic_5_adj_0_3 } },
+  all_goals { try { refine ⟨1, _⟩, split; simp only [matrix.cons_val_one, matrix.head_cons, ne.def], norm_num,
+    exact not_cyclic_5_adj_0_3 } },
+end
+
 lemma strong_pow_two_independence_number :
-  5 ≤ (⊠^2 (cyclic 5)).independence_number := sorry
+  5 ≤ (⊠^2 (cyclic 5)).independence_number :=
+begin
+  rw [independence_number_eq_bcsupr, supr],
+  apply le_cSup, swap,
+  { refine ⟨max_independent_set, _⟩, dsimp only,
+    rw nat.supr_pos, apply card_max_independent_set,
+    apply max_independent_set_is_independent },
+  let s : set ℕ := _, suffices : bdd_above s, exact this,
+  apply fintype.bdd_above_range,
+end
 
 /-- The easier direction.
 
