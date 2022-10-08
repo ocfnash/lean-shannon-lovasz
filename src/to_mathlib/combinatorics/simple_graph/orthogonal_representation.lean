@@ -62,6 +62,10 @@ lemma inner_eq_zero_of_ne_of_not_adj {v w : V} (h₁ : v ≠ w) (h₂ : ¬ G.adj
   ⟪ρ v, ρ w⟫ = 0 :=
 ρ.inner_eq_zero_of_ne_of_not_adj' v w h₁ h₂
 
+lemma orthormal_on_independent (I : set V) (hI : G.independent_set I) :
+  orthonormal ℝ (I.restrict ρ) :=
+⟨λ _, ρ.norm_eq_one, λ i j h, ρ.inner_eq_zero_of_ne_of_not_adj (λ r, h $ subtype.ext r) $ hI i j⟩
+
 /-- The Lovász number of an orthogonal representation of a graph at a vector `e`. -/
 def lovasz_number_at (e : E) : ℝ :=
 ⨆ v, ∥e∥^2 / ⟪ρ v, e⟫^2
@@ -83,7 +87,7 @@ lemma lovasz_number_at_eq_csupr (e : E) :
   ρ.lovasz_number_at e = ⨆ v, ∥e∥^2 / ⟪ρ v, e⟫^2 :=
 rfl
 
-lemma independence_number_le_lovasz_number_at (e : E) :
+lemma independence_number_le_lovasz_number_at [fintype V] (e : E) :
   (G.independence_number : ℝ) ≤ ρ.lovasz_number_at e :=
 sorry
 

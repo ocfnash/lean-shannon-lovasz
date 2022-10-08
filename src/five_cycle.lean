@@ -55,13 +55,34 @@ begin
     exact real_inner_self_nonneg, norm_num },
 end
 
+lemma strong_pow_two_independence_number :
+  (⊠^2 (cyclic 5)).independence_number = 5 := sorry
+
 /-- The easier direction.
 
 Easy on paper, not necessarily in Lean. -/
 lemma le_shannon_capacity_cyclic_graph_five :
   sqrt 5 ≤ shannon_capacity 𝔾₅ :=
 begin
-  sorry,
+  dunfold shannon_capacity, rw [supr],
+  rw le_cSup_iff,
+  { intros b hb,
+    have := (lovasz_umbrella).independence_number_le_lovasz_number_at e₁,
+    specialize @hb _ ⟨1, rfl⟩, dsimp only at hb,
+    rwa [show 1 + 1 = 2, from rfl, show (↑(1 : ℕ) : ℝ) = 1, by norm_cast,
+      show (1 : ℝ) + 1 = 2, by norm_cast, strong_pow_two_independence_number,
+      show (↑(5 : ℕ) : ℝ) = 5, by norm_num, ←sqrt_eq_rpow] at hb },
+  { refine ⟨sqrt 5, _⟩, rintros _ ⟨k, rfl⟩, dsimp only,
+    have H := (lovasz_umbrella.pow (k+1)).independence_number_le_lovasz_number_at
+      (tensor_power.tpow ℝ (λ _, e₁)),
+    rw [orthogonal_representation.pow_lovasz_number_at', lovasz_number_at_lovasz_umbrella_eq] at H,
+    refine (real.rpow_le_rpow _ H _).trans _,
+    { norm_cast, exact nat.zero_le _, },
+    { rw div_nonneg_iff, left, split, norm_num, norm_cast, exact nat.zero_le _, },
+    { rw [show sqrt 5 ^ (k + 1) = sqrt 5 ^ (k + 1 : ℝ), by norm_cast, ←real.rpow_mul,
+      mul_one_div_cancel, rpow_one], norm_cast,
+      linarith, exact sqrt_nonneg _, }, },
+  { exact ⟨_, ⟨1, rfl⟩⟩, },
 end
 
 /-- The harder direction. -/
