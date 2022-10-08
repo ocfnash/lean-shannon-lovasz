@@ -5,6 +5,7 @@ import to_mathlib.analysis.inner_product_space.tensor_power
 import to_mathlib.combinatorics.simple_graph.strong_product
 import to_mathlib.combinatorics.simple_graph.independent
 import algebra.order.field
+import algebra.order.monoid
 import topology.algebra.order.basic
 
 noncomputable theory
@@ -239,9 +240,106 @@ product `G ⊠ G ⊠ ⋯ ⊠ G` in `E ⊗ E ⊗ ⋯ ⊗ E`. -/
       exact ⟨x, finset.mem_univ _, ρ.inner_eq_zero_of_ne_of_not_adj h1 h2⟩, },
   end, }
 
+@[simp] def vec_equiv_prod {k : ℕ} : (fin k.succ → V) ≃ (fin k → V) × V :=
+{ to_fun := λ v, (λ x, v (fin.succ x), v 0),
+  inv_fun := λ p x, if h : (x : ℕ) ≠ 0
+    then p.1 ⟨nat.pred x, lt_of_lt_of_le (nat.pred_lt h) (nat.lt_succ_iff.mp x.2)⟩
+    else p.2,
+  left_inv := λ f, funext $ λ x, begin
+    dsimp only, split_ifs,
+    { congr' 1, ext1,
+      rw [fin.succ_mk, fin.coe_mk, ←nat.succ_eq_add_one, nat.succ_pred_eq_of_pos],
+      rwa pos_iff_ne_zero, },
+    { push_neg at h, congr' 1, ext1, exact h.symm, },
+  end,
+  right_inv := λ ⟨f, v⟩, begin
+    ext1, dsimp only,
+    { ext1 x, split_ifs, simp_rw [fin.coe_succ, nat.pred_succ], congr' 1, ext1, refl,
+      exfalso, push_neg at h, refine nat.succ_ne_zero x _, convert h,
+      rw fin.coe_succ, },
+    { dsimp only, rw dif_neg, push_neg, refl, },
+  end }
+
+@[simps] def vec_fun_equiv {k : ℕ} : ((fin k.succ → V) → ℝ) ≃ (((fin k → V) × V) → ℝ) :=
+{ to_fun := λ f x, f (vec_equiv_prod.symm x),
+  inv_fun := λ f x, f (vec_equiv_prod x),
+  left_inv := λ f, funext $ λ x, begin
+    dsimp only, congr' 1, simp only [equiv.symm_apply_apply],
+  end,
+  right_inv := λ f, funext $ λ x, begin
+    dsimp only, congr' 1, simp only [equiv.apply_symm_apply],
+  end }
+
+lemma succ_vec_fun_range {k : ℕ} (f : (fin k.succ → V) → ℝ) :
+  set.range f = set.range (vec_fun_equiv f) :=
+begin
+  ext1 x, split,
+  { rintros ⟨v, rfl⟩,
+    refine ⟨vec_equiv_prod v, _⟩,
+    simp only [vec_equiv_prod, ne.def, dite_not, equiv.coe_fn_mk, vec_fun_equiv_apply,
+      equiv.coe_fn_symm_mk, fin.succ_mk],
+    congr' 1, ext, split_ifs,
+    { congr' 1, ext1, rw h, refl, },
+    { congr' 1, ext1, rw [fin.coe_mk, ←nat.succ_eq_add_one, nat.succ_pred_eq_of_pos],
+      rw pos_iff_ne_zero, exact h, } },
+  { rintros ⟨⟨g, v⟩, rfl⟩,
+    simp only [vec_fun_equiv_apply, mem_range_self], },
+end
+
 @[simp] lemma pow_lovasz_number_at {k : ℕ} [finite V] (e : fin k → E) :
   (ρ.pow k).lovasz_number_at (tensor_power.tpow ℝ e) = ∏ i, ρ.lovasz_number_at (e i) :=
-sorry
+begin
+  rw [lovasz_number_at, supr],
+  induction k with k ih,
+  { rw [fin.prod_univ_zero],
+    have : range (λ (v : fin 0 → V), ∥tensor_power.tpow ℝ e∥ ^ 2 / inner ((ρ.pow 0) v) (tensor_power.tpow ℝ e) ^ 2) = {1},
+    { ext, split,
+      { rintros ⟨y, rfl⟩, dsimp only,
+        rw [pow_to_fun, set.mem_singleton_iff, ←real_inner_self_eq_norm_sq,
+          inner_product_space.tensor_power.inner_tpow, fin.prod_univ_zero,
+          inner_product_space.tensor_power.inner_tpow, fin.prod_univ_zero, one_pow, div_one] },
+      { rintros h, rw set.mem_singleton_iff at h, rw h,
+        refine ⟨fin_zero_elim, _⟩, dsimp only,
+        rw [←real_inner_self_eq_norm_sq, inner_product_space.tensor_power.inner_tpow,
+          fin.prod_univ_zero, pow_to_fun, inner_product_space.tensor_power.inner_tpow,
+          fin.prod_univ_zero, one_pow, div_one] }, },
+        rw [this, cSup_singleton], },
+  { rw [fin.prod_univ_succ, ←ih, succ_vec_fun_range],
+    rw [lovasz_number_at, supr, real.Sup_mul_Sup],
+    congr' 1,
+    { ext1, split,
+      { rintros ⟨y, rfl⟩,
+        simp only [ne.def, vec_equiv_prod, pow_to_fun, inner_product_space.tensor_power.inner_tpow,
+          comp_app, vec_fun_equiv_apply, dite_not, equiv.coe_fn_symm_mk],
+        rw [fin.prod_univ_succ, ←real_inner_self_eq_norm_sq, ←real_inner_self_eq_norm_sq,
+          inner_product_space.tensor_power.inner_tpow, dif_pos, fin.prod_univ_succ, mul_pow],
+        rw show ∀ (a b c d : ℝ), (a * b) / (c * d) = (a / c) * (b / d),
+        { intros, ring_nf, rw mul_inv, },
+        refine ⟨_, _, ⟨y.2, rfl⟩, ⟨y.1, _⟩, rfl⟩,
+        { dsimp only, rw [←real_inner_self_eq_norm_sq, inner_product_space.tensor_power.inner_tpow],
+          congr' 2, refine finset.prod_congr rfl _,
+          intros x _, rw [dif_neg],
+          simp_rw [fin.coe_succ, nat.pred_succ], congr, ext1, refl,
+          rw [fin.coe_succ],
+          exact nat.succ_ne_zero _, },
+        refl },
+      { rintros ⟨_, _, ⟨x, rfl⟩, ⟨y, rfl⟩, rfl⟩,
+        dsimp only, refine ⟨⟨y, x⟩, _⟩,
+        simp only [ne.def, vec_equiv_prod, pow_to_fun, inner_product_space.tensor_power.inner_tpow,
+          comp_app, vec_fun_equiv_apply, dite_not, equiv.coe_fn_symm_mk],
+        rw [←real_inner_self_eq_norm_sq, ←real_inner_self_eq_norm_sq, ←real_inner_self_eq_norm_sq,
+          inner_product_space.tensor_power.inner_tpow, inner_product_space.tensor_power.inner_tpow,
+          fin.prod_univ_succ, fin.prod_univ_succ, dif_pos, mul_pow],
+        rw show ∀ (a b c d : ℝ), (a * b) / (c * d) = (a / c) * (b / d),
+        { intros, ring_nf, rw mul_inv, },
+        congr' 3, refine finset.prod_congr rfl _,
+        intros x _, rw [dif_neg], simp_rw [fin.coe_succ, ←nat.succ_eq_add_one, nat.pred_succ],
+        congr, ext1, refl,
+        rw [fin.coe_succ], exact nat.succ_ne_zero _,
+        refl, } },
+      { rintros _ ⟨v, rfl⟩, dsimp only, rw [←div_pow, pow_two], exact mul_self_nonneg _ },
+      { rintros _ ⟨f, rfl⟩, dsimp only, rw [←div_pow, pow_two], exact mul_self_nonneg _ } },
+end
 
 lemma pow_lovasz_number_at' {k : ℕ} [finite V] (e : E) :
   (ρ.pow k).lovasz_number_at (tensor_power.tpow ℝ (λ i, e)) = (ρ.lovasz_number_at e)^k :=
