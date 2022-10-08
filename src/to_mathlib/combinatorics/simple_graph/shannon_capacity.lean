@@ -36,7 +36,9 @@ begin
   -- Eliminate casts
   norm_cast,
   -- Apply first key fact; the Lovász number is multiplicative `ϑ(⊠ᵏG, ⊠ᵏρ, e^k) = ϑ(G, ρ, e)^k`:
-  rw ← ρ.pow_lovasz_number_at' e,
+  rw [← ρ.pow_lovasz_number_at' e],
+  haveI : fintype (fin (k + 1) → V),
+  { refine fintype.of_finite _, },
   -- Apply second key fact; the independence number of a graph is bounded by the Lovász number:
   apply orthogonal_representation.independence_number_le_lovasz_number_at,
 end
