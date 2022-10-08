@@ -5,6 +5,7 @@ import to_mathlib.analysis.inner_product_space.tensor_power
 import to_mathlib.combinatorics.simple_graph.strong_product
 import to_mathlib.combinatorics.simple_graph.independent
 import algebra.order.field
+import topology.algebra.order.basic
 
 noncomputable theory
 
@@ -118,7 +119,75 @@ lemma real.Sup_mul_Sup
   (s : set ℝ) (hs : ∀ (a : ℝ), a ∈ s → 0 ≤ a)
   (t : set ℝ) (ht : ∀ (a : ℝ), a ∈ t → 0 ≤ a):
   Sup s * Sup t = Sup (s * t) :=
-sorry
+begin
+  have le1 : 0 ≤ Sup s := real.Sup_nonneg _ hs,
+  have le2 : 0 ≤ Sup t := real.Sup_nonneg _ ht,
+  obtain rfl | hs1 := s.eq_empty_or_nonempty,
+  { rw [real.Sup_empty, zero_mul, set.empty_mul, real.Sup_empty], },
+  obtain rfl | ht1 := t.eq_empty_or_nonempty,
+  { rw [real.Sup_empty, mul_zero, set.mul_empty, real.Sup_empty], },
+  have hst1 : (s * t).nonempty := ⟨hs1.some * ht1.some, ⟨_, _, hs1.some_spec, ht1.some_spec, rfl⟩⟩,
+  obtain rfl | hs0 := eq_or_ne s {0},
+  { rw [cSup_singleton, zero_mul, show {(0 : ℝ)} * t = {0}, from _, cSup_singleton],
+    ext1, split,
+    { rintros ⟨x, y, hx, hy, rfl⟩,
+      rw set.mem_singleton_iff at hx ⊢,
+      rw [hx, zero_mul], },
+    { rintros hx, rw set.mem_singleton_iff at hx, rw hx,
+      exact ⟨0, ht1.some, set.mem_singleton _, ht1.some_spec, zero_mul _⟩, } },
+  obtain rfl | ht0 := eq_or_ne t {0},
+  { rw [cSup_singleton, mul_zero, show s * {(0 : ℝ)} = {0}, from _, cSup_singleton],
+    ext1, split,
+    { rintros ⟨x, y, hx, hy, rfl⟩,
+      rw set.mem_singleton_iff at hy ⊢,
+      rw [hy, mul_zero], },
+    { rintros hx, rw set.mem_singleton_iff at hx, rw hx,
+      exact ⟨hs1.some, 0, hs1.some_spec, set.mem_singleton _, mul_zero _⟩, } },
+  replace hs0 : ∃ x : ℝ, x ∈ s ∧ x ≠ 0,
+  { contrapose! hs0, rw eq_singleton_iff_nonempty_unique_mem,
+    refine ⟨hs1, hs0⟩, },
+  replace ht0 : ∃ x : ℝ, x ∈ t ∧ x ≠ 0,
+  { contrapose! ht0, rw eq_singleton_iff_nonempty_unique_mem,
+    refine ⟨ht1, ht0⟩, },
+  by_cases hs2 : ¬bdd_above s,
+  { rw [real.Sup_def s, dif_neg, zero_mul, real.Sup_def, dif_neg],
+    rw [not_and_distrib], right, contrapose! hs2,
+    rcases hs2 with ⟨M, hM⟩,
+    refine ⟨M/ht0.some, λ x hx, _⟩,
+    specialize hM ⟨x, ht0.some, hx, ht0.some_spec.1, rfl⟩,
+    rwa le_div_iff, apply lt_of_le_of_ne, exact ht _ ht0.some_spec.1,
+    exact ht0.some_spec.2.symm,
+    rw [not_and_distrib], right, assumption, },
+  by_cases ht2 : ¬bdd_above t,
+  { rw [real.Sup_def t, dif_neg, mul_zero, real.Sup_def, dif_neg],
+    rw [not_and_distrib], right, contrapose! ht2,
+    rcases ht2 with ⟨M, hM⟩,
+    refine ⟨M/hs0.some, λ x hx, _⟩,
+    specialize hM ⟨hs0.some, x, hs0.some_spec.1, hx, rfl⟩,
+    rwa [le_div_iff, mul_comm], apply lt_of_le_of_ne, exact hs _ hs0.some_spec.1,
+    exact hs0.some_spec.2.symm,
+    rw [not_and_distrib], right, assumption, },
+  rw not_not at hs2 ht2,
+  have hst2 : bdd_above (s * t) := ⟨hs2.some * ht2.some, begin
+    rintros _ ⟨x, y, hx, hy, rfl⟩, apply mul_le_mul,
+    exact hs2.some_spec hx, exact ht2.some_spec hy, exact ht _ hy,
+    refine (hs _ hs1.some_spec).trans (hs2.some_spec hs1.some_spec),
+  end⟩,
+
+  apply le_antisymm,
+  { obtain ⟨a, ha1, ha2, ha3⟩ := exists_seq_tendsto_Sup hs1 hs2,
+    obtain ⟨b, hb1, hb2, hb3⟩ := exists_seq_tendsto_Sup ht1 ht2,
+    let c : ℕ → ℝ := λ n, a n * b n,
+    have hc1 : monotone c := monotone.mul ha1 hb1 (λ x, hs _ (ha3 _)) (λ x, ht _ (hb3 _)),
+    have hc2 : filter.tendsto c filter.at_top (nhds (Sup s * Sup t)) := filter.tendsto.mul ha2 hb2,
+    have hc3 : ∀ n, c n ∈ s * t := λ n, ⟨a n, b n, ha3 _, hb3 _, rfl⟩,
+    refine le_of_tendsto' hc2 (λ n, (real.is_lub_Sup _ hst1 hst2).1 ⟨_, _, ha3 _, hb3 _, rfl⟩), },
+  { refine cSup_le hst1 _,
+    rintros _ ⟨a, b, ha, hb, rfl⟩,
+    have ha1 := (real.is_lub_Sup s hs1 hs2).1 ha,
+    have hb1 := (real.is_lub_Sup t ht1 ht2).1 hb,
+    refine mul_le_mul ha1 hb1 (ht _ hb) le1, },
+end
 
 @[simp] lemma prod_lovasz_number_at [finite V] [finite W] (e : E) (f : F) :
   (ρ.prod ρ').lovasz_number_at (e ⊗ₜ f) = (ρ.lovasz_number_at e) * (ρ'.lovasz_number_at f) :=
