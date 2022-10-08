@@ -56,7 +56,7 @@ begin
 end
 
 lemma strong_pow_two_independence_number :
-  (⊠^2 (cyclic 5)).independence_number = 5 := sorry
+  5 ≤ (⊠^2 (cyclic 5)).independence_number := sorry
 
 /-- The easier direction.
 
@@ -69,9 +69,11 @@ begin
   { intros b hb,
     have := (lovasz_umbrella).independence_number_le_lovasz_number_at e₁,
     specialize @hb _ ⟨1, rfl⟩, dsimp only at hb,
-    rwa [show 1 + 1 = 2, from rfl, show (↑(1 : ℕ) : ℝ) = 1, by norm_cast,
-      show (1 : ℝ) + 1 = 2, by norm_cast, strong_pow_two_independence_number,
-      show (↑(5 : ℕ) : ℝ) = 5, by norm_num, ←sqrt_eq_rpow] at hb },
+    rw [show 1 + 1 = 2, from rfl, show (↑(1 : ℕ) : ℝ) = 1, by norm_cast,
+      show (1 : ℝ) + 1 = 2, by norm_cast, ←sqrt_eq_rpow, sqrt_le_iff] at hb,
+    have h2 : (5 : ℝ) ≤ (⊠^2 (cyclic 5)).independence_number :=
+      by exact_mod_cast strong_pow_two_independence_number,
+    rw sqrt_le_iff, refine ⟨hb.1, h2.trans hb.2⟩ },
   { refine ⟨sqrt 5, _⟩, rintros _ ⟨k, rfl⟩, dsimp only,
     have H := (lovasz_umbrella.pow (k+1)).independence_number_le_lovasz_number_at
       (tensor_power.tpow ℝ (λ _, e₁)),
