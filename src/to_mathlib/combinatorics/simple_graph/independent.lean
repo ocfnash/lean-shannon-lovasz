@@ -121,4 +121,40 @@ begin
   },
 end
 
+lemma exists_maximal_independent_set [fintype V] : ∃ (s : set V) (hs : G.independent_set s),
+  nat.card s = G.independence_number :=
+begin
+  rw independence_number,
+  have ne : (nat.card ∘ coe_sort '' G.independent_set).nonempty,
+  { refine ⟨_, ⟨∅, λ x, false.elim (not_mem_empty x.1 x.2), rfl⟩⟩, },
+  haveI : nonempty (nat.card ∘ coe_sort '' G.independent_set) :=
+    ⟨⟨ne.some, ne.some_spec⟩⟩,
+  have : G.independence_number ∈ _:= nat.Sup_mem _ _,
+  rw [set.mem_image] at this,
+  obtain ⟨s, hs1, hs2⟩ := this,
+  refine ⟨s, hs1, _⟩,
+  simp only [comp_app] at hs2, rw hs2, refl, assumption,
+  haveI : fintype (nat.card ∘ coe_sort '' G.independent_set),
+  { apply_instance, },
+  obtain ⟨M, hM⟩ := @fintype.exists_le (nat.card ∘ coe_sort '' G.independent_set)
+    _ _ _ (nat.card ∘ coe_sort '' G.independent_set) _ id,
+  refine ⟨M, _⟩,
+  rintros _ ⟨s, hs, rfl⟩,
+  specialize hM ⟨nat.card s, ⟨s, hs, rfl⟩⟩,
+  convert hM,
+end
+
+def maximal_independent_set [fintype V] : set V := G.exists_maximal_independent_set.some
+
+lemma maximal_independent_set_is_independent [fintype V] :
+  G.independent_set G.maximal_independent_set :=
+G.exists_maximal_independent_set.some_spec.some
+
+lemma card_maximal_independent_set [fintype V] :
+  nat.card G.maximal_independent_set = G.independence_number :=
+G.exists_maximal_independent_set.some_spec.some_spec
+
+instance [fintype V] : fintype G.maximal_independent_set :=
+fintype.of_finite (maximal_independent_set G)
+
 end simple_graph

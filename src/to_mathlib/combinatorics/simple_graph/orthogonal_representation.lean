@@ -62,7 +62,7 @@ lemma inner_eq_zero_of_ne_of_not_adj {v w : V} (h₁ : v ≠ w) (h₂ : ¬ G.adj
   ⟪ρ v, ρ w⟫ = 0 :=
 ρ.inner_eq_zero_of_ne_of_not_adj' v w h₁ h₂
 
-lemma orthormal_on_independent (I : set V) (hI : G.independent_set I) :
+lemma orthonormal_on_independent (I : set V) (hI : G.independent_set I) :
   orthonormal ℝ (I.restrict ρ) :=
 ⟨λ _, ρ.norm_eq_one, λ i j h, ρ.inner_eq_zero_of_ne_of_not_adj (λ r, h $ subtype.ext r) $ hI i j⟩
 
